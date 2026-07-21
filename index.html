@@ -75,6 +75,10 @@
   .section-title p{margin:0;font-size:12px;color:var(--ink-faint);}
 
   #map{height:260px;margin:14px 4px 0;border-radius:20px;overflow:hidden;}
+  #map .leaflet-pane,
+  #map .leaflet-top,
+  #map .leaflet-bottom,
+  #map .leaflet-control{z-index:400 !important;}
   .empty-note{margin:14px 4px 0;padding:26px;text-align:center;font-size:12.5px;color:var(--ink-faint);border-radius:20px;background:var(--surface);}
 
   .cluster-route{margin:14px 4px 0;background:var(--surface);border-radius:20px;padding:20px;}
@@ -97,6 +101,9 @@
   .floatbar .count{font-size:12.5px;color:rgba(255,255,255,.7);}
   .floatbar .count span{color:#fff;font-weight:600;}
   .floatbar button{background:#fff;color:var(--ink);border:none;padding:10px 18px;border-radius:999px;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;}
+  .clear-btn{background:transparent !important;color:rgba(255,255,255,.55) !important;padding:0 !important;width:26px;height:26px;font-size:16px;display:none;align-items:center;justify-content:center;flex-shrink:0;}
+  .clear-btn.show{display:flex;}
+  .clear-btn:hover{color:#fff !important;}
 
   .footer{margin-top:40px;padding:20px 4px 0;border-top:1px solid var(--line);text-align:center;}
   .footer a.footer-insta{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--surface);color:var(--ink-soft);margin-bottom:12px;text-decoration:none;}
@@ -160,6 +167,7 @@
 </div>
 
 <div class="floatbar">
+  <button class="clear-btn" id="clear-btn" onclick="clearSelection()" title="선택 초기화">×</button>
   <div class="count"><span id="sel-count">0</span>곳 선택됨</div>
   <button onclick="document.getElementById('route-title').scrollIntoView({behavior:'smooth'})">동선 보기</button>
 </div>
@@ -315,6 +323,13 @@ function toggleSelect(id){ viewerState.selected[id] = !viewerState.selected[id];
 function updateCounts(){
   const total = Object.values(viewerState.selected).filter(Boolean).length;
   document.getElementById('sel-count').textContent = total;
+  document.getElementById('clear-btn').classList.toggle('show', total>0);
+}
+function clearSelection(){
+  viewerState.selected = {};
+  viewerState.manualOrder = {};
+  saveViewerState();
+  renderAll();
 }
 
 function initMap(){
