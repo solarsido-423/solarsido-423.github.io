@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>관리자 — 웨딩밴드 투어 가이드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --bg:#F2EAE1;
+    --surface:#FFFFFF;
+    --surface-soft:#F8F2EA;
+    --ink:#2B2620;
+    --ink-soft:#8C8377;
+    --ink-faint:#C1B6A7;
+    --accent:#9C4B37;
+    --accent-soft:#EDDCD1;
+    --line:#E9E0D3;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Pretendard',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 32px 80px;}
+
+  /* Login */
+  .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .login-box{background:var(--surface);border-radius:24px;padding:32px;max-width:320px;width:100%;}
+  .login-box h1{font-size:18px;margin:0 0 4px;font-weight:600;}
+  .login-box p{font-size:12.5px;color:var(--ink-faint);margin:0 0 20px;}
+  .login-box input{width:100%;background:var(--surface-soft);border:none;border-radius:10px;padding:12px;font-size:14px;font-family:inherit;margin-bottom:10px;color:var(--ink);}
+  .login-box input:focus{outline:2px solid var(--accent-soft);}
+  .login-error{font-size:11.5px;color:var(--accent);margin-bottom:10px;display:none;}
+  .login-error.show{display:block;}
+  .btn-ink{background:var(--ink);border:none;color:#fff;padding:12px 18px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;}
+
+  /* Dashboard */
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 4px;}
+  .topbar h1{font-size:18px;margin:0;font-weight:600;}
+  .logout-link{font-size:11.5px;color:var(--ink-faint);cursor:pointer;padding:6px 12px;border-radius:999px;border:1px solid var(--line);}
+  .view-site-link{font-size:11.5px;color:var(--accent);text-decoration:none;padding:6px 12px;}
+
+  .section{margin-top:8px;}
+  .section-head{padding:24px 4px 10px;}
+  .section-head h2{font-size:16px;margin:0 0 3px;font-weight:600;}
+  .section-head p{margin:0;font-size:11.5px;color:var(--ink-faint);}
+
+  .area-row{background:var(--surface);border-radius:14px;padding:12px 14px;margin-bottom:8px;}
+  .area-row-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .area-row input{min-width:100px;}
+  .area-row-controls input{flex:1;border:none;background:transparent;font-size:14px;font-weight:600;color:var(--ink);font-family:inherit;padding:6px 4px;}
+  .area-row-controls input:focus{outline:none;background:var(--surface-soft);border-radius:6px;}
+  .area-desc-input{width:100%;border:none;background:var(--surface-soft);border-radius:8px;font-size:12.5px;color:var(--ink-soft);font-family:inherit;padding:9px 10px;margin-top:8px;}
+  .area-desc-input:focus{outline:2px solid var(--accent-soft);}
+  .icon-btn{width:26px;height:26px;border:none;background:var(--surface-soft);border-radius:7px;font-size:11px;cursor:pointer;color:var(--ink-soft);flex-shrink:0;}
+  .icon-btn.danger:hover{color:var(--accent);}
+  .icon-btn.save{width:auto;padding:0 12px;white-space:nowrap;font-weight:600;}
+  .icon-btn.save:hover{color:var(--accent);}
+
+  .inline-form{margin:8px 4px 0;padding:16px;border-radius:14px;background:var(--surface);display:flex;gap:8px;}
+  .inline-form input{flex:1;background:var(--surface-soft);border:none;border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;}
+  .inline-form input:focus{outline:2px solid var(--accent-soft);}
+  .btn-small{background:var(--ink);border:none;color:#fff;padding:0 16px;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+
+  .area-tabs{display:flex;gap:8px;padding:4px 0 0;overflow-x:auto;scrollbar-width:none;}
+  .area-tabs::-webkit-scrollbar{display:none;}
+  .area-tab{flex-shrink:0;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:500;background:var(--surface);cursor:pointer;color:var(--ink-soft);white-space:nowrap;}
+  .area-tab.active{background:var(--ink);color:#fff;}
+
+  .list{padding:14px 4px 0;display:flex;flex-direction:column;gap:10px;}
+  @media (min-width:760px){
+    .list{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;}
+    .card.open{grid-column:1 / -1;}
+  }
+  .card{background:var(--surface);border-radius:18px;padding:16px;}
+  .card-top{display:flex;gap:10px;align-items:center;cursor:pointer;}
+  .card-top h3{margin:0;font-size:14.5px;font-weight:600;flex:1;}
+  .badge{font-size:10px;padding:3px 8px;border-radius:999px;font-weight:600;}
+  .badge.ok{background:var(--accent-soft);color:var(--accent);}
+  .badge.warn{background:var(--surface-soft);color:var(--ink-faint);}
+  .chevron{font-size:11px;color:var(--ink-faint);}
+
+  .card-detail{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);}
+  .card.open .card-detail{display:block;}
+  .field-label{font-size:10.5px;letter-spacing:.1em;color:var(--ink-faint);margin-bottom:6px;text-transform:uppercase;font-weight:600;}
+  .field-input{width:100%;border:none;border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;background:var(--surface-soft);color:var(--ink);margin-bottom:14px;}
+  .field-input:focus{outline:2px solid var(--accent-soft);}
+  .chip-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;}
+  .chip{font-size:11.5px;padding:7px 13px;border-radius:999px;background:var(--surface-soft);color:var(--ink-soft);cursor:pointer;font-family:inherit;border:none;font-weight:500;}
+  .chip.on{background:var(--ink);color:#fff;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+  .mini-btn{font-size:11px;padding:9px 14px;border-radius:999px;border:none;background:var(--surface-soft);color:var(--ink-soft);cursor:pointer;font-family:inherit;font-weight:500;}
+  .mini-btn.locate{color:var(--accent);background:var(--accent-soft);}
+  .mini-btn.danger{color:var(--accent);}
+  .mini-btn.save-btn{color:#fff;background:var(--ink);}
+  .mini-btn.save-btn.saved{background:var(--accent);}
+
+  .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:12px;z-index:200;display:none;}
+  .toast.show{display:block;}
+  .loading-note{padding:20px;text-align:center;font-size:12.5px;color:var(--ink-faint);}
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <h1>관리자 로그인</h1>
+    <p>웨딩밴드 투어 가이드 관리 페이지예요.</p>
+    <input type="email" id="login-id" placeholder="이메일" autocomplete="username">
+    <input type="password" id="login-pw" placeholder="비밀번호" autocomplete="current-password">
+    <div class="login-error" id="login-error">아이디 또는 비밀번호가 맞지 않아요.</div>
+    <button class="btn-ink" onclick="doLogin()">로그인</button>
+  </div>
+</div>
+
+<div class="wrap" id="dashboard" style="display:none;">
+  <div class="topbar">
+    <h1>관리자 페이지</h1>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <a class="view-site-link" href="./" target="_blank">사이트 보기 ↗</a>
+      <div class="logout-link" onclick="doLogout()">로그아웃</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>지역 관리</h2>
+      <p>순서 변경, 이름 수정, 삭제가 가능해요. 지역을 삭제하면 그 안의 샵도 함께 삭제돼요.</p>
+    </div>
+    <div id="area-list"></div>
+    <div class="inline-form">
+      <input type="text" id="new-area-input" placeholder="새 지역 이름 (예: 강남, 성수)">
+      <button class="btn-small" onclick="addArea()">추가</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>샵 관리</h2>
+      <p>지역을 선택하고 샵 정보를 수정하세요.</p>
+    </div>
+    <div class="area-tabs" id="area-tabs"></div>
+    <div class="inline-form" style="margin-top:14px;">
+      <input type="text" id="new-shop-name" placeholder="새 샵 이름">
+      <button class="btn-small" onclick="addShop()">추가</button>
+    </div>
+    <div class="list" id="shop-list"><div class="loading-note">불러오는 중...</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://cybrpntkywehiontyjsk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5YnJwbnRreXdlaGlvbnR5anNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTg4MDYsImV4cCI6MjA5OTE3NDgwNn0._fCurd5HBRgNDvK4_NS4btyzL6zDajVumPW_ISz8tPY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const TAG_OPTIONS = ['실버','14K','18K','24K','큐빅','모사나이트','지르코니아','랩다이아몬드','천연다이아'];
+
+let areas = [];
+let brands = [];
+let activeArea = null;
+let openCardId = null;
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+async function doLogin(){
+  const email = document.getElementById('login-id').value.trim();
+  const pw = document.getElementById('login-pw').value;
+  document.getElementById('login-error').classList.remove('show');
+  const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+  if(error){
+    document.getElementById('login-error').textContent = '이메일 또는 비밀번호가 맞지 않아요.';
+    document.getElementById('login-error').classList.add('show');
+    return;
+  }
+  showDashboard();
+}
+document.getElementById('login-pw').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+async function doLogout(){
+  await sb.auth.signOut();
+  location.reload();
+}
+function showDashboard(){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  init();
+}
+
+function slugify(str){ return 'a_' + str.trim().replace(/\s+/g,'_').replace(/[^\w\uac00-\ud7a3_]/g,'') + '_' + Date.now()%10000; }
+function getCoords(b){ if(b.lat!=null && b.lng!=null) return {lat:b.lat, lng:b.lng}; return null; }
+function isConfirmed(b){ return !!getCoords(b); }
+
+async function loadData(){
+  const { data: areaData, error: areaErr } = await sb.from('areas').select('*').order('sort_order');
+  if(areaErr){ showToast('지역 정보를 불러오지 못했어요'); console.error(areaErr); }
+  areas = areaData || [];
+  if(!activeArea && areas.length) activeArea = areas[0].id;
+
+  const { data: brandData, error: brandErr } = await sb
+    .from('brands')
+    .select('*, brand_admin(*)')
+    .eq('removed', false)
+    .order('created_at');
+  if(brandErr){ showToast('샵 정보를 불러오지 못했어요'); console.error(brandErr); }
+
+  brands = (brandData||[]).map(b=>{
+    const ba = Array.isArray(b.brand_admin) ? b.brand_admin[0] : b.brand_admin;
+    return {
+      id:b.id, name:b.name, area:b.area_id, address:b.address,
+      lat:b.lat, lng:b.lng, nameUnsure:b.name_unsure, publicPrice:b.public_price,
+      price: ba?.price || '', note: ba?.note || '', materials: ba?.materials || [],
+      websiteUrl: ba?.website_url || '', instagramUrl: ba?.instagram_url || ''
+    };
+  });
+}
+
+/* ---------- Areas ---------- */
+function renderAreaList(){
+  const list = document.getElementById('area-list');
+  list.innerHTML = '';
+  areas.forEach((a, i)=>{
+    const row = document.createElement('div');
+    row.className = 'area-row';
+    row.innerHTML = `
+      <div class="area-row-controls">
+        <button class="icon-btn" ${i===0?'disabled style="opacity:.3"':''} onclick="moveArea(${i},-1)">↑</button>
+        <button class="icon-btn" ${i===areas.length-1?'disabled style="opacity:.3"':''} onclick="moveArea(${i},1)">↓</button>
+        <input type="text" id="area-name-${a.id}" value="${a.label}">
+        <button class="icon-btn save" onclick="renameArea('${a.id}')">저장</button>
+        <button class="icon-btn danger" onclick="deleteArea('${a.id}')">×</button>
+      </div>
+      <input type="text" class="area-desc-input" id="area-desc-${a.id}" placeholder="이 지역 한줄 설명 (예: 합리적인 가격대, 예물상가 밀집)" value="${a.description||''}">
+    `;
+    list.appendChild(row);
+  });
+}
+async function moveArea(idx, dir){
+  const newIdx = idx+dir;
+  if(newIdx<0 || newIdx>=areas.length) return;
+  const a1 = areas[idx], a2 = areas[newIdx];
+  const tmp = a1.sort_order;
+  a1.sort_order = a2.sort_order;
+  a2.sort_order = tmp;
+  const { error } = await Promise.resolve().then(async ()=>{
+    const r1 = await sb.from('areas').update({sort_order:a1.sort_order}).eq('id', a1.id);
+    const r2 = await sb.from('areas').update({sort_order:a2.sort_order}).eq('id', a2.id);
+    return { error: r1.error || r2.error };
+  });
+  if(error){ showToast('순서 변경에 실패했어요'); console.error(error); }
+  areas.sort((x,y)=>x.sort_order-y.sort_order);
+  renderAreaList();
+  renderAreaTabs();
+}
+async function renameArea(id){
+  const val = document.getElementById('area-name-'+id).value.trim();
+  const descVal = document.getElementById('area-desc-'+id).value.trim();
+  if(!val) return;
+  const { error } = await sb.from('areas').update({label:val, description:descVal||null}).eq('id', id);
+  if(error){ showToast('저장에 실패했어요'); console.error(error); return; }
+  const a = areas.find(x=>x.id===id);
+  a.label = val;
+  a.description = descVal;
+  showToast('저장했어요');
+  renderAreaTabs();
+}
+async function deleteArea(id){
+  const a = areas.find(x=>x.id===id);
+  const shopCount = brands.filter(b=>b.area===id).length;
+  const msg = shopCount>0
+    ? `"${a.label}" 지역과 그 안의 샵 ${shopCount}곳이 모두 삭제돼요. 계속할까요?`
+    : `"${a.label}" 지역을 삭제할까요?`;
+  if(!confirm(msg)) return;
+  const { error } = await sb.from('areas').delete().eq('id', id);
+  if(error){ showToast('삭제에 실패했어요'); console.error(error); return; }
+  await loadData();
+  renderAreaList();
+  renderAreaTabs();
+  renderShopList();
+}
+async function addArea(){
+  const input = document.getElementById('new-area-input');
+  const val = input.value.trim();
+  if(!val) return;
+  const id = slugify(val);
+  const maxOrder = areas.length ? Math.max(...areas.map(a=>a.sort_order||0)) : 0;
+  const { error } = await sb.from('areas').insert({id, label:val, sort_order:maxOrder+1});
+  if(error){ showToast('지역 추가에 실패했어요'); console.error(error); return; }
+  input.value = '';
+  await loadData();
+  renderAreaList();
+  renderAreaTabs();
+}
+
+/* ---------- Area tabs for shop section ---------- */
+function renderAreaTabs(){
+  const tabs = document.getElementById('area-tabs');
+  tabs.innerHTML = '';
+  areas.forEach(a=>{
+    const div = document.createElement('div');
+    div.className = 'area-tab' + (a.id===activeArea?' active':'');
+    div.textContent = a.label;
+    div.onclick = ()=>{ activeArea = a.id; renderAreaTabs(); renderShopList(); };
+    tabs.appendChild(div);
+  });
+}
+
+/* ---------- Shops ---------- */
+async function ensureBrandAdmin(id){
+  const { error } = await sb.from('brand_admin').upsert({brand_id:id}, {onConflict:'brand_id', ignoreDuplicates:true});
+  if(error) console.error(error);
+}
+function renderShopList(){
+  const list = document.getElementById('shop-list');
+  list.innerHTML = '';
+  const shops = brands.filter(b=>b.area===activeArea);
+  if(!shops.length){
+    list.innerHTML = '<div class="loading-note">이 지역엔 등록된 샵이 없어요.</div>';
+    return;
+  }
+  shops.forEach(b=>{
+    const confirmed = isConfirmed(b);
+    const materials = b.materials || [];
+    const card = document.createElement('div');
+    card.className = 'card' + (openCardId===b.id?' open':'');
+    card.id = 'shop-card-'+b.id;
+    const chipsHtml = TAG_OPTIONS.map(tag=>`<button type="button" class="chip ${materials.includes(tag)?'on':''}" onclick="toggleMaterial('${b.id}','${tag}')">${tag}</button>`).join('');
+    card.innerHTML = `
+      <div class="card-top" onclick="toggleOpen('${b.id}')">
+        <h3>${b.name}</h3>
+        <span class="badge ${confirmed?'ok':'warn'}">${confirmed?'위치 확인됨':'위치 미지정'}</span>
+        <span class="chevron">${openCardId===b.id?'▲':'▼'}</span>
+      </div>
+      <div class="card-detail">
+        <div class="field-label">샵 이름</div>
+        <input class="field-input" id="name-input-${b.id}" value="${b.name}">
+        <div class="field-label">주소</div>
+        <input class="field-input" id="addr-input-${b.id}" placeholder="예: 서울 종로구 율곡로8길 21-1 1층" value="${b.address||''}">
+        <div class="btn-row" style="margin-bottom:14px;">
+          <button class="mini-btn locate" id="geocode-btn-${b.id}" onclick="geocodeAddress('${b.id}')">주소로 위치 찾기</button>
+        </div>
+        <div class="field-label">위도 / 경도 (직접 입력 — 주소 찾기가 실패할 때만 사용하세요)</div>
+        <div class="btn-row" style="margin-bottom:14px;gap:8px;">
+          <input class="field-input" id="lat-input-${b.id}" placeholder="위도 (예: 37.5734935)" value="${b.lat!=null?b.lat:''}" style="margin-bottom:0;">
+          <input class="field-input" id="lng-input-${b.id}" placeholder="경도 (예: 126.9925268)" value="${b.lng!=null?b.lng:''}" style="margin-bottom:0;">
+          <button class="mini-btn locate" onclick="saveManualCoords('${b.id}')">좌표 저장</button>
+        </div>
+        <div class="field-label">소재 / 스톤</div>
+        <div class="chip-row">${chipsHtml}</div>
+        <div class="field-label">홈페이지 URL</div>
+        <input class="field-input" id="website-input-${b.id}" placeholder="https://..." value="${b.websiteUrl||''}">
+        <div class="field-label">인스타그램 URL</div>
+        <input class="field-input" id="instagram-input-${b.id}" placeholder="https://instagram.com/..." value="${b.instagramUrl||''}">
+        <div class="field-label">확인한 가격대</div>
+        <input class="field-input" id="price-input-${b.id}" placeholder="예: 커플링 2개 합 180만원대" value="${b.price||''}">
+        <div class="field-label">메모</div>
+        <input class="field-input" id="note-input-${b.id}" placeholder="느낀 점, 디자인 이름 등" value="${b.note||''}">
+        <div class="btn-row">
+          <button class="mini-btn save-btn" id="save-btn-${b.id}" onclick="saveShop('${b.id}')">저장</button>
+          <button class="mini-btn danger" onclick="deleteShop('${b.id}')">이 샵 삭제</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+function toggleOpen(id){
+  openCardId = (openCardId===id ? null : id);
+  renderShopList();
+}
+async function toggleMaterial(id, tag){
+  const b = brands.find(x=>x.id===id);
+  const cur = b.materials || [];
+  const idx = cur.indexOf(tag);
+  const next = idx>-1 ? cur.filter(t=>t!==tag) : [...cur, tag];
+  await ensureBrandAdmin(id);
+  const { error } = await sb.from('brand_admin').update({materials:next}).eq('brand_id', id);
+  if(error){ showToast('저장에 실패했어요'); console.error(error); return; }
+  b.materials = next;
+  renderShopList();
+}
+async function saveManualCoords(id){
+  const latVal = parseFloat(document.getElementById('lat-input-'+id).value);
+  const lngVal = parseFloat(document.getElementById('lng-input-'+id).value);
+  if(isNaN(latVal) || isNaN(lngVal)){ showToast('위도/경도를 숫자로 입력해주세요'); return; }
+  const { error } = await sb.from('brands').update({lat:latVal, lng:lngVal}).eq('id', id);
+  if(error){ showToast('저장에 실패했어요'); console.error(error); return; }
+  const b = brands.find(x=>x.id===id);
+  b.lat = latVal; b.lng = lngVal;
+  showToast('좌표를 저장했어요');
+  renderShopList();
+}
+async function geocodeAddress(id){
+  const input = document.getElementById('addr-input-'+id);
+  const addr = input.value.trim();
+  if(!addr){ showToast('주소를 먼저 입력해주세요'); return; }
+  const btn = document.getElementById('geocode-btn-'+id);
+  const original = btn.textContent;
+  btn.textContent = '찾는 중...';
+  try{
+    const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=kr&q=' + encodeURIComponent(addr);
+    const res = await fetch(url, {headers:{'Accept-Language':'ko'}});
+    const results = await res.json();
+    if(!results.length){
+      showToast('주소를 찾지 못했어요. 조금 더 자세히 입력해주세요');
+      btn.textContent = original;
+      return;
+    }
+    const lat = parseFloat(results[0].lat), lng = parseFloat(results[0].lon);
+    const { error } = await sb.from('brands').update({lat, lng, address:addr}).eq('id', id);
+    if(error){ showToast('위치 저장에 실패했어요'); console.error(error); btn.textContent = original; return; }
+    const b = brands.find(x=>x.id===id);
+    b.lat = lat; b.lng = lng; b.address = addr;
+    showToast('위치를 찾았어요');
+    btn.textContent = original;
+    renderShopList();
+  }catch(e){
+    console.error(e);
+    showToast('위치 검색 중 문제가 생겼어요');
+    btn.textContent = original;
+  }
+}
+async function saveShop(id){
+  const nameVal = document.getElementById('name-input-'+id).value.trim();
+  const addrVal = document.getElementById('addr-input-'+id).value.trim();
+  const priceVal = document.getElementById('price-input-'+id).value;
+  const noteVal = document.getElementById('note-input-'+id).value;
+  const websiteVal = document.getElementById('website-input-'+id).value.trim();
+  const instagramVal = document.getElementById('instagram-input-'+id).value.trim();
+  if(!nameVal){ showToast('샵 이름은 비워둘 수 없어요'); return; }
+  await ensureBrandAdmin(id);
+  const [{ error: e1 }, { error: e2 }] = await Promise.all([
+    sb.from('brands').update({name:nameVal, address:addrVal||null}).eq('id', id),
+    sb.from('brand_admin').update({price:priceVal, note:noteVal, website_url:websiteVal||null, instagram_url:instagramVal||null}).eq('brand_id', id)
+  ]);
+  const btn = document.getElementById('save-btn-'+id);
+  if(e1 || e2){ showToast('저장에 실패했어요'); console.error(e1||e2); return; }
+  const b = brands.find(x=>x.id===id);
+  b.name = nameVal; b.address = addrVal; b.price = priceVal; b.note = noteVal; b.websiteUrl = websiteVal; b.instagramUrl = instagramVal;
+  const original = btn.textContent;
+  btn.textContent = '저장됨 ✓';
+  btn.classList.add('saved');
+  setTimeout(()=>{ btn.textContent = original; btn.classList.remove('saved'); }, 1500);
+  renderShopList();
+}
+async function deleteShop(id){
+  const b = brands.find(x=>x.id===id);
+  if(!confirm(`"${b.name}"을(를) 삭제할까요?`)) return;
+  const { error } = await sb.from('brands').update({removed:true}).eq('id', id);
+  if(error){ showToast('삭제에 실패했어요'); console.error(error); return; }
+  await loadData();
+  renderShopList();
+}
+async function addShop(){
+  const input = document.getElementById('new-shop-name');
+  const name = input.value.trim();
+  if(!name) return;
+  const id = slugify(name);
+  const { error } = await sb.from('brands').insert({id, name, area_id:activeArea});
+  if(error){ showToast('샵 추가에 실패했어요'); console.error(error); return; }
+  input.value = '';
+  await loadData();
+  renderShopList();
+}
+
+async function init(){
+  await loadData();
+  renderAreaList();
+  renderAreaTabs();
+  renderShopList();
+}
+
+(async ()=>{
+  const { data } = await sb.auth.getSession();
+  if(data.session){
+    showDashboard();
+  }
+})();
+</script>
+</body>
+</html>
